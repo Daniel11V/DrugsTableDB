@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request, url_for
-from flask_mysqldb import MySQL
+from flask import Flask, render_template, url_for
+# from flask_mysqldb import MySQL
 
 app = Flask(__name__)
 
@@ -15,12 +15,13 @@ app = Flask(__name__)
 
 @app.route('/')
 def Index():
+    return render_template('index.html')
     # cur = mysql.connection.cursor()
     # cur.execute('SELECT * FROM contacts')
     # data = cur.fetchall()
     # print(data)
     # return render_template('index.html', contacts = data)
-    return render_template('index.html')
+
 
 if __name__ == '__main__':
     app.run(port = 3000, debug = True)
