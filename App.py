@@ -79,7 +79,7 @@ def load_data_bin(new_file_name):
         print("Failed loading JSON file from MySQL table: {0}".format(error))
     return new_data
 
-@app.route('/exportJsonFile')
+@app.route('/')
 def exportJsonFile():
     print()
     print('Start Web-App >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
@@ -147,20 +147,20 @@ def store_json_obj(my_json_obj):
     query = """
     CREATE TABLE main_info (
         id INT NOT NULL AUTO_INCREMENT,
-        SampleNumber VARCHAR(250) DEFAULT NULL,
-        PipelineVersion VARCHAR(250) DEFAULT NULL,
-        Sequencer VARCHAR(250) DEFAULT NULL,
-        KnowledgebaseVersion VARCHAR(250) DEFAULT NULL,
-        DateGenerated VARCHAR(250) DEFAULT NULL,
+        samplenumber VARCHAR(250) DEFAULT NULL,
+        pipelineversion VARCHAR(250) DEFAULT NULL,
+        sequencer VARCHAR(250) DEFAULT NULL,
+        knowledgebaseversion VARCHAR(250) DEFAULT NULL,
+        dategenerated VARCHAR(250) DEFAULT NULL,
         PRIMARY KEY (id)
-    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
     fullQuery += query
     excuteCommand(s_msg + "MainInfo", e_msg, query)  
 
     query = f"""
     INSERT INTO main_info 
-    (SampleNumber, PipelineVersion, Sequencer, KnowledgebaseVersion, DateGenerated)
+    (samplenumber, pipelineversion, sequencer, knowledgebaseversion, dategenerated)
     VALUES 
     (
         '{ my_json_obj["SampleNumber"]}',
@@ -174,25 +174,25 @@ def store_json_obj(my_json_obj):
     excuteCommand(s_msg + "MainInfo Data", e_msg, query)  
 
     # CurrentMedications Table
-    query = "DROP TABLE IF EXISTS CurrentMedications;"
+    query = "DROP TABLE IF EXISTS currentmedications;"
     fullQuery += query
     excuteCommand(s_msg + "CurrentMedications Delete", e_msg, query)  
 
     query = """
-    CREATE TABLE CurrentMedications (
+    CREATE TABLE currentmedications (
         id INT NOT NULL AUTO_INCREMENT,
-        GroupPhenotype VARCHAR(250) NOT NULL,
-        idAction INT NOT NULL,
-        Recommendation VARCHAR(250) NOT NULL,
+        groupphenotype VARCHAR(250) NOT NULL,
+        idaction INT NOT NULL,
+        recommendation VARCHAR(250) NOT NULL,
         PRIMARY KEY (id)
-    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
     fullQuery += query
     excuteCommand(s_msg + "CurrentMedications", e_msg, query)  
 
     query = f"""
-    INSERT INTO CurrentMedications 
-    (GroupPhenotype, idAction, Recommendation)
+    INSERT INTO currentmedications 
+    (groupphenotype, idaction, recommendation)
     VALUES """
 
     AllActions = []
@@ -214,16 +214,16 @@ def store_json_obj(my_json_obj):
 
 
     # TheraputicArea Table
-    query = "DROP TABLE IF EXISTS TheraputicArea;"
+    query = "DROP TABLE IF EXISTS theraputicarea;"
     fullQuery += query
     excuteCommand(s_msg + "TheraputicArea Delete", e_msg, query)  
 
     query = """
-    CREATE TABLE TheraputicArea (
+    CREATE TABLE theraputicarea (
         id INT NOT NULL AUTO_INCREMENT,
-        Area VARCHAR(250) NOT NULL,
+        area VARCHAR(250) NOT NULL,
         PRIMARY KEY (id)
-    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
     fullQuery += query
     excuteCommand(s_msg + "TheraputicArea", e_msg, query)  
@@ -235,8 +235,8 @@ def store_json_obj(my_json_obj):
                 AllAreas.append(area)
 
     query = f"""
-    INSERT INTO TheraputicArea 
-    (Area)
+    INSERT INTO theraputicarea 
+    (area)
     VALUES """
 
     for area in AllAreas:
@@ -249,25 +249,25 @@ def store_json_obj(my_json_obj):
 
 
     # TheraputicAreaOfCurrentMedication Table
-    query = "DROP TABLE IF EXISTS TheraputicAreaOfCurrentMedication;"
+    query = "DROP TABLE IF EXISTS theraputicareaofcurrentmedication;"
     fullQuery += query
-    excuteCommand(s_msg + "TheraputicAreaOfCurrentMedication Delete", e_msg, query)  
+    excuteCommand(s_msg + "theraputicareaofcurrentmedication Delete", e_msg, query)  
 
     query = """
-    CREATE TABLE TheraputicAreaOfCurrentMedication (
+    CREATE TABLE theraputicareaofcurrentmedication (
         id INT NOT NULL AUTO_INCREMENT,
-        idCurrentMedications INT NOT NULL,
-        idTheraputicArea INT NOT NULL,
+        idcurrentmedications INT NOT NULL,
+        idtheraputicarea INT NOT NULL,
         PRIMARY KEY (id)
-    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
     fullQuery += query
     excuteCommand(s_msg + "TheraputicAreaOfCurrentMedication", e_msg, query)  
 
 
     query = f"""
-    INSERT INTO TheraputicAreaOfCurrentMedication 
-    (idCurrentMedications, idTheraputicArea)
+    INSERT INTO theraputicareaofcurrentmedication 
+    (idcurrentmedications, idtheraputicarea)
     VALUES """
    
     idMed = 0
@@ -284,16 +284,16 @@ def store_json_obj(my_json_obj):
 
     
     # Action Table
-    query = "DROP TABLE IF EXISTS Action;"
+    query = "DROP TABLE IF EXISTS action;"
     fullQuery += query
     excuteCommand(s_msg + "Action Delete", e_msg, query)  
 
     query = """
-    CREATE TABLE Action (
+    CREATE TABLE action (
         id INT NOT NULL AUTO_INCREMENT,
-        Value VARCHAR(250) NOT NULL,
+        value VARCHAR(250) NOT NULL,
         PRIMARY KEY (id)
-    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
     fullQuery += query
     excuteCommand(s_msg + "Action", e_msg, query)  
@@ -305,8 +305,8 @@ def store_json_obj(my_json_obj):
                 AllActions.append(action)
 
     query = f"""
-    INSERT INTO Action 
-    (Value)
+    INSERT INTO action 
+    (value)
     VALUES """
 
     for action in AllActions:
@@ -319,23 +319,23 @@ def store_json_obj(my_json_obj):
 
 
     # Generic Table
-    query = "DROP TABLE IF EXISTS Generic;"
+    query = "DROP TABLE IF EXISTS generic;"
     fullQuery += query
     excuteCommand(s_msg + "Generic Delete", e_msg, query)  
 
     query = """
-    CREATE TABLE Generic (
+    CREATE TABLE generic (
         id INT NOT NULL AUTO_INCREMENT,
-        Value VARCHAR(250) NOT NULL,
+        value VARCHAR(250) NOT NULL,
         PRIMARY KEY (id)
-    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
     fullQuery += query
     excuteCommand(s_msg + "Generic", e_msg, query)  
 
     query = f"""
-    INSERT INTO Generic 
-    (Value)
+    INSERT INTO generic 
+    (value)
     VALUES """
 
     AllGenerics = []
@@ -353,23 +353,23 @@ def store_json_obj(my_json_obj):
 
 
     # Trade Table
-    query = "DROP TABLE IF EXISTS Trade;"
+    query = "DROP TABLE IF EXISTS trade;"
     fullQuery += query
     excuteCommand(s_msg + "Trade Delete", e_msg, query)  
 
     query = """
-    CREATE TABLE Trade (
+    CREATE TABLE trade (
         id INT NOT NULL AUTO_INCREMENT,
-        Value VARCHAR(250) NOT NULL,
+        value VARCHAR(250) NOT NULL,
         PRIMARY KEY (id)
-    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
     fullQuery += query
     excuteCommand(s_msg + "Trade", e_msg, query)  
 
     query = f"""
-    INSERT INTO Trade 
-    (Value)
+    INSERT INTO trade 
+    (value)
     VALUES """
 
     AllTrades = []
@@ -387,25 +387,25 @@ def store_json_obj(my_json_obj):
 
 
     # Drugs Table
-    query = "DROP TABLE IF EXISTS Drugs;"
+    query = "DROP TABLE IF EXISTS drugs;"
     fullQuery += query
     excuteCommand(s_msg + "Drugs Delete", e_msg, query)  
 
     query = """
-    CREATE TABLE Drugs (
+    CREATE TABLE drugs (
         id INT NOT NULL AUTO_INCREMENT,
-        idCurrentMedications INT NOT NULL,
-        idGeneric INT NOT NULL,
-        idTrade INT NOT NULL,
+        idcurrentmedications INT NOT NULL,
+        idgeneric INT NOT NULL,
+        idtrade INT NOT NULL,
         PRIMARY KEY (id)
-    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
     fullQuery += query
     excuteCommand(s_msg + "Drugs", e_msg, query)  
 
     query = f"""
-    INSERT INTO Drugs 
-    (idCurrentMedications, idGeneric, idTrade)
+    INSERT INTO drugs 
+    (idcurrentmedications, idgeneric, idtrade)
     VALUES """
 
     idMed = 0
@@ -425,26 +425,26 @@ def store_json_obj(my_json_obj):
     
 
     # GeneInfo Table
-    query = "DROP TABLE IF EXISTS GeneInfo;"
+    query = "DROP TABLE IF EXISTS geneinfo;"
     fullQuery += query
     excuteCommand(s_msg + "GeneInfo Delete", e_msg, query)  
 
     query = """
-    CREATE TABLE GeneInfo (
+    CREATE TABLE geneinfo (
         id INT NOT NULL AUTO_INCREMENT,
-        idCurrentMedications INT NOT NULL,
-        Gene VARCHAR(250) NOT NULL,
-        Genotype VARCHAR(250) NOT NULL,
-        Phenotype VARCHAR(250) NOT NULL,
+        idcurrentmedications INT NOT NULL,
+        gene VARCHAR(250) NOT NULL,
+        genotype VARCHAR(250) NOT NULL,
+        phenotype VARCHAR(250) NOT NULL,
         PRIMARY KEY (id)
-    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
     fullQuery += query
     excuteCommand(s_msg + "GeneInfo", e_msg, query)  
 
     query = f"""
-    INSERT INTO GeneInfo 
-    (idCurrentMedications, Gene, Genotype, Phenotype)
+    INSERT INTO geneinfo 
+    (idcurrentmedications, gene, genotype, phenotype)
     VALUES """
 
     idMed = 0
@@ -474,21 +474,21 @@ def load_data(new_file_name):
     e_msg = "Fail to download "
     db_json = { "CurrentMedications": [] }
 
-    query = "SELECT * FROM CurrentMedications"
+    query = "SELECT * FROM currentmedications"
     CurrentMedications = excuteCommand(s_msg + "MainInfo Data", e_msg, query)  
-    query = "SELECT * FROM TheraputicArea"
+    query = "SELECT * FROM theraputicarea"
     TheraputicArea = excuteCommand(s_msg + "TheraputicArea Data", e_msg, query)  
-    query = "SELECT * FROM TheraputicAreaOfCurrentMedication"
+    query = "SELECT * FROM theraputicareaofcurrentmedication"
     TAofCM = excuteCommand(s_msg + "TheraputicAreaOfCurrentMedication Data", e_msg, query)  
-    query = "SELECT * FROM Action"
+    query = "SELECT * FROM action"
     Action = excuteCommand(s_msg + "Action Data", e_msg, query)  
-    query = "SELECT * FROM Drugs"
+    query = "SELECT * FROM drugs"
     Drugs = excuteCommand(s_msg + "Drugs Data", e_msg, query)  
-    query = "SELECT * FROM Trade"
+    query = "SELECT * FROM trade"
     Trade = excuteCommand(s_msg + "Trade Data", e_msg, query)  
-    query = "SELECT * FROM Generic"
+    query = "SELECT * FROM generic"
     Generic = excuteCommand(s_msg + "Generic Data", e_msg, query)  
-    query = "SELECT * FROM GeneInfo"
+    query = "SELECT * FROM geneinfo"
     GeneInfo = excuteCommand(s_msg + "GeneInfo Data", e_msg, query)  
 
     AllActions = []
@@ -548,7 +548,7 @@ def load_data(new_file_name):
     return db_json
 
 
-@app.route('/')
+@app.route('/exportJsonData')
 def exportJsonData():
     print()
     print('Start Web-App >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
