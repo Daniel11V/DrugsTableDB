@@ -7,9 +7,10 @@
     font-size: 14px;
 }
 
-h1 {
+h2 {
     font-size: 20px;
-    margin-bottom: 2px;
+    padding-bottom: 2px;
+    margin-bottom: 0;
 }
 
 p {
@@ -62,7 +63,8 @@ p {
     font-weight: 400;
 }
 
-.phenotype_t {
+.gene_t {
+    border-top: none;
     font-weight: 600;
 }
 
