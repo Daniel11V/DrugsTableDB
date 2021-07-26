@@ -9,17 +9,17 @@ TRY_JSON_FILE_NAME = "static/json/try_this_data.json"
 app = Flask(__name__)
 
 # Local MySQL Connection, Testing
-app.config['MYSQL_HOST'] = 'localhost'      #default, sino ip
-app.config['MYSQL_USER'] = 'root'           #default
-app.config['MYSQL_PASSWORD'] = 'password'           #Como no tiene va vacio
-app.config['MYSQL_DB'] = 'datajson'
+# app.config['MYSQL_HOST'] = 'localhost'      #default, sino ip
+# app.config['MYSQL_USER'] = 'root'           #default
+# app.config['MYSQL_PASSWORD'] = 'password'           #Como no tiene va vacio
+# app.config['MYSQL_DB'] = 'datajson'
 
 
 # Mysql Connection
-# app.config['MYSQL_HOST'] = 'us-cdbr-east-04.cleardb.com'      #default, sino ip
-# app.config['MYSQL_USER'] = 'b84140fd6b4ddf'           #default
-# app.config['MYSQL_PASSWORD'] = '103a3e04'           #Como no tiene va vacio
-# app.config['MYSQL_DB'] = 'heroku_f1785faf0fab98b'
+app.config['MYSQL_HOST'] = 'us-cdbr-east-04.cleardb.com'      #default, sino ip
+app.config['MYSQL_USER'] = 'b84140fd6b4ddf'           #default
+app.config['MYSQL_PASSWORD'] = '103a3e04'           #Como no tiene va vacio
+app.config['MYSQL_DB'] = 'heroku_f1785faf0fab98b'
 mysql = MySQL(app)
 
 # settings
