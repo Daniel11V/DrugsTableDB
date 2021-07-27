@@ -26,94 +26,7 @@ mysql = MySQL(app)
 app.secret_key = 'mysecretkey'
 
 
-
-# A way to get the same result, but by storing the hole JSON File
-
-def get_db_json_bin():
-    # Get JSON File from MySQL if exists
-    db_json_bin = ''
-    try:
-        cur = mysql.connection.cursor()
-        result = cur.execute("""SELECT data FROM table_json 
-        WHERE EXISTS (SELECT data FROM table_json);""")
-        db_json_bin = cur.fetchall()
-        print("JSON file loaded successfully from MySQL, result: ", result)
-    except mysql.connection.Error as error:
-        print("Failed loading JSON file from MySQL table: {0}".format(error))
-    return db_json_bin
-
-def get_my_json_bin(my_json_file):
-    # Get JSON File from Local as binary
-    with open(my_json_file, 'rb') as file:
-        my_json_bin = file.read()
-    print("JSON file loaded successfully from Local")
-    return my_json_bin
-
-def store_json_bin(my_json_bin):
-    # Export JSON File to MySQL
-    try:
-        cur = mysql.connection.cursor()
-        cur.execute("DROP TABLE IF EXISTS table_json;")
-        cur.execute("CREATE TABLE table_json (data BLOB);")
-        query = "INSERT INTO table_json (data) VALUES (%s)"
-        result = cur.execute(query, [my_json_bin])
-        mysql.connection.commit()
-        print("Local JSON File inserted successfully as a BLOB into table_json table, result: ", result)
-    except mysql.connection.Error as error:
-        print("Failed inserting BLOB data into MySQL table: {0}".format(error))
-
-def load_data_bin(new_file_name):
-    # Import JSON File from MySQL
-    try:
-        cur = mysql.connection.cursor()
-        result = cur.execute('SELECT data FROM table_json')
-        json_file = cur.fetchall()
-        # Writing file
-        with open(new_file_name, 'wb') as file:
-            file.write(json_file[0][0])
-        # Get Python JSON Object
-        with open(new_file_name) as file:
-            new_data = json.load(file)  
-        print("JSON file loaded successfully from table_json table, result: ", result)
-    except mysql.connection.Error as error:
-        print("Failed loading JSON file from MySQL table: {0}".format(error))
-    return new_data
-
-@app.route('/')
-def exportJsonFile():
-    print()
-    print('Start Web-App >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-    print('Checking JSON Data...')
-    db_json_bin = get_db_json_bin()
-    if db_json_bin:
-        db_json_bin = db_json_bin[0][0]
-    my_json_bin = get_my_json_bin(MY_JSON_FILE_NAME)
-    # Also yo can try with TRY_JSON_FILE_NAME
-
-    if len(db_json_bin) != len(my_json_bin):
-        print("DB JSON File needs update, proceding to export local json file to MySQL...")
-        store_json_bin(my_json_bin)
-        print("Data Base updated")
-    else:
-        print("Data Base is updated")
-
-    print("Proceding to import the data json...")
-    db_data = load_data_bin(DB_JSON_FILE_NAME)
-    print("JSON Data loaded correctly and ready to use.")
-
-    all_theraputic_areas = []
-    for medication in db_data["CurrentMedications"]:
-        for therapeutic_area in medication["TheraputicArea"]:
-            if not therapeutic_area in all_theraputic_areas:
-                all_theraputic_areas.append(therapeutic_area)
-
-    return render_template('index.html', data = db_data, theraputic_areas = all_theraputic_areas)
-
-
-
-
-
-# Another Way, by Storing JSON Data >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# First Way for complete the task, by Storing JSON Data, not file >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 def get_my_json_obj(my_json_file):
     # Get JSON Object from Local
@@ -127,7 +40,7 @@ def excuteCommand(success_msg, error_msg, query):
         cur = mysql.connection.cursor()
         result = cur.execute(query)
         mysql.connection.commit()
-        print(f"{success_msg}, result:", result)
+        # print(f"{success_msg}, result:", result)
         return cur.fetchall()
     except mysql.connection.Error as error:
         print(f"{error_msg}, error: {error}")
@@ -137,32 +50,33 @@ def store_json_obj(my_json_obj):
     # Export JSON Data to MySQL
     s_msg = "Uploaded "
     e_msg = "Fail to upload "
-    fullQuery = ""
+    # fullQuery = ""
 
     # MainInfo Table
     query = "DROP TABLE IF EXISTS main_info;"
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "MainInfo Delete", e_msg, query)  
 
     query = """
     CREATE TABLE main_info (
         id INT NOT NULL AUTO_INCREMENT,
-        samplenumber VARCHAR(250) DEFAULT NULL,
-        pipelineversion VARCHAR(250) DEFAULT NULL,
-        sequencer VARCHAR(250) DEFAULT NULL,
-        knowledgebaseversion VARCHAR(250) DEFAULT NULL,
-        dategenerated VARCHAR(250) DEFAULT NULL,
+        samplenumber VARCHAR(15) DEFAULT NULL,
+        pipelineversion VARCHAR(10) DEFAULT NULL,
+        sequencer VARCHAR(20) DEFAULT NULL,
+        knowledgebaseversion VARCHAR(10) DEFAULT NULL,
+        dategenerated VARCHAR(30) DEFAULT NULL,
         PRIMARY KEY (id)
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "MainInfo", e_msg, query)  
 
     query = f"""
     INSERT INTO main_info 
-    (samplenumber, pipelineversion, sequencer, knowledgebaseversion, dategenerated)
+    (id, samplenumber, pipelineversion, sequencer, knowledgebaseversion, dategenerated)
     VALUES 
     (
+        1,
         '{ my_json_obj["SampleNumber"]}',
         '{ my_json_obj["PipelineVersion"]}',
         '{ my_json_obj["Sequencer"]}',
@@ -170,29 +84,29 @@ def store_json_obj(my_json_obj):
         '{ my_json_obj["DateGenerated"]}'
     );
     """
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "MainInfo Data", e_msg, query)  
 
     # CurrentMedications Table
     query = "DROP TABLE IF EXISTS currentmedications;"
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "CurrentMedications Delete", e_msg, query)  
 
     query = """
     CREATE TABLE currentmedications (
         id INT NOT NULL AUTO_INCREMENT,
-        groupphenotype VARCHAR(250) NOT NULL,
+        groupphenotype VARCHAR(30) NOT NULL,
         idaction INT NOT NULL,
-        recommendation VARCHAR(250) NOT NULL,
+        recommendation VARCHAR(150) NOT NULL,
         PRIMARY KEY (id)
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "CurrentMedications", e_msg, query)  
 
     query = f"""
     INSERT INTO currentmedications 
-    (groupphenotype, idaction, recommendation)
+    (id, groupphenotype, idaction, recommendation)
     VALUES """
 
     AllActions = []
@@ -200,32 +114,35 @@ def store_json_obj(my_json_obj):
         if not medication["Action"][0] in AllActions:
             AllActions.append(medication["Action"][0])
 
+    idMed = 0
     for medication in my_json_obj["CurrentMedications"]:
+        idMed += 1
         query += f"""
         (
+            {idMed},
             '{ medication['GroupPhenotype']}',
             '{ AllActions.index(medication['Action'][0]) + 1 }',
             '{ medication['Recommendation']}'
         ),"""
 
     query = query[:-1] + ";"
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "CurrentMedications Data", e_msg, query)  
 
 
     # TheraputicArea Table
     query = "DROP TABLE IF EXISTS theraputicarea;"
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "TheraputicArea Delete", e_msg, query)  
 
     query = """
     CREATE TABLE theraputicarea (
         id INT NOT NULL AUTO_INCREMENT,
-        area VARCHAR(250) NOT NULL,
+        area VARCHAR(20) NOT NULL,
         PRIMARY KEY (id)
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "TheraputicArea", e_msg, query)  
 
     AllAreas = []
@@ -236,21 +153,23 @@ def store_json_obj(my_json_obj):
 
     query = f"""
     INSERT INTO theraputicarea 
-    (area)
+    (id, area)
     VALUES """
 
+    idMed = 0
     for area in AllAreas:
-        query += f"('{area}'),"
+        idMed += 1
+        query += f"({idMed},'{area}'),"
 
     query = query[:-1] + ";"
 
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "TheraputicArea Data", e_msg, query)  
 
 
     # TheraputicAreaOfCurrentMedication Table
     query = "DROP TABLE IF EXISTS theraputicareaofcurrentmedication;"
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "theraputicareaofcurrentmedication Delete", e_msg, query)  
 
     query = """
@@ -261,41 +180,43 @@ def store_json_obj(my_json_obj):
         PRIMARY KEY (id)
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "TheraputicAreaOfCurrentMedication", e_msg, query)  
 
 
     query = f"""
     INSERT INTO theraputicareaofcurrentmedication 
-    (idcurrentmedications, idtheraputicarea)
+    (id, idcurrentmedications, idtheraputicarea)
     VALUES """
    
     idMed = 0
+    idArea = 0
     for medication in my_json_obj["CurrentMedications"]:
         idMed += 1
         for area in medication["TheraputicArea"]:
-            query += f"('{ idMed }','{ AllAreas.index(area) + 1 }'),"
+            idArea += 1
+            query += f"({idArea},'{ idMed }','{ AllAreas.index(area) + 1 }'),"
 
     query = query[:-1] + ";"
 
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "TheraputicAreaOfCurrentMedication Data", e_msg, query)  
     
 
     
     # Action Table
     query = "DROP TABLE IF EXISTS action;"
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Action Delete", e_msg, query)  
 
     query = """
     CREATE TABLE action (
         id INT NOT NULL AUTO_INCREMENT,
-        value VARCHAR(250) NOT NULL,
+        value VARCHAR(15) NOT NULL,
         PRIMARY KEY (id)
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Action", e_msg, query)  
 
     AllActions = []
@@ -306,89 +227,95 @@ def store_json_obj(my_json_obj):
 
     query = f"""
     INSERT INTO action 
-    (value)
+    (id, value)
     VALUES """
 
+    idMed = 0
     for action in AllActions:
-        query += f"('{action}'),"
+        idMed += 1
+        query += f"({idMed}, '{action}'),"
 
     query = query[:-1] + ";"
 
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Action Data", e_msg, query)  
 
 
     # Generic Table
     query = "DROP TABLE IF EXISTS generic;"
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Generic Delete", e_msg, query)  
 
     query = """
     CREATE TABLE generic (
         id INT NOT NULL AUTO_INCREMENT,
-        value VARCHAR(250) NOT NULL,
+        value VARCHAR(25) NOT NULL,
         PRIMARY KEY (id)
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Generic", e_msg, query)  
 
     query = f"""
     INSERT INTO generic 
-    (value)
+    (id, value)
     VALUES """
 
+    idMed = 0
     AllGenerics = []
     for medication in my_json_obj["CurrentMedications"]:
         for drugs in medication["Drugs"]:
             for generic in drugs["Generic"]:
                 if not generic in AllGenerics:
+                    idMed += 1
                     AllGenerics.append(generic)
-                    query += f"('{generic}'),"
+                    query += f"({idMed},'{generic}'),"
 
     query = query[:-1] + ";"
 
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Generic Data", e_msg, query)  
 
 
     # Trade Table
     query = "DROP TABLE IF EXISTS trade;"
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Trade Delete", e_msg, query)  
 
     query = """
     CREATE TABLE trade (
         id INT NOT NULL AUTO_INCREMENT,
-        value VARCHAR(250) NOT NULL,
+        value VARCHAR(25) NOT NULL,
         PRIMARY KEY (id)
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Trade", e_msg, query)  
 
     query = f"""
     INSERT INTO trade 
-    (value)
+    (id, value)
     VALUES """
 
+    idMed = 0
     AllTrades = []
     for medication in my_json_obj["CurrentMedications"]:
         for drugs in medication["Drugs"]:
             for trade in drugs["Trade"]:
                 if not trade in AllTrades:
+                    idMed += 1
                     AllTrades.append(trade)
-                    query += f"('{trade}'),"
+                    query += f"({idMed},'{trade}'),"
 
     query = query[:-1] + ";"
 
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Trade Data", e_msg, query)  
 
 
     # Drugs Table
     query = "DROP TABLE IF EXISTS drugs;"
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Drugs Delete", e_msg, query)  
 
     query = """
@@ -400,19 +327,22 @@ def store_json_obj(my_json_obj):
         PRIMARY KEY (id)
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Drugs", e_msg, query)  
 
     query = f"""
     INSERT INTO drugs 
-    (idcurrentmedications, idgeneric, idtrade)
+    (id, idcurrentmedications, idgeneric, idtrade)
     VALUES """
 
+    idDrug = 0
     idMed = 0
     for medication in my_json_obj["CurrentMedications"]:
         idMed += 1
         for drug in medication["Drugs"]:
+            idDrug += 1
             query += f"""(
+                {idDrug},
                 {idMed},
                 {AllGenerics.index(drug["Generic"][0]) + 1},
                 {AllTrades.index(drug["Trade"][0]) + 1}
@@ -420,38 +350,41 @@ def store_json_obj(my_json_obj):
 
     query = query[:-1] + ";"
 
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "Drugs Data", e_msg, query)  
     
 
     # GeneInfo Table
     query = "DROP TABLE IF EXISTS geneinfo;"
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "GeneInfo Delete", e_msg, query)  
 
     query = """
     CREATE TABLE geneinfo (
         id INT NOT NULL AUTO_INCREMENT,
         idcurrentmedications INT NOT NULL,
-        gene VARCHAR(250) NOT NULL,
-        genotype VARCHAR(250) NOT NULL,
-        phenotype VARCHAR(250) NOT NULL,
+        gene VARCHAR(15) NOT NULL,
+        genotype VARCHAR(10) NOT NULL,
+        phenotype VARCHAR(25) NOT NULL,
         PRIMARY KEY (id)
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
     """
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "GeneInfo", e_msg, query)  
 
     query = f"""
     INSERT INTO geneinfo 
-    (idcurrentmedications, gene, genotype, phenotype)
+    (id, idcurrentmedications, gene, genotype, phenotype)
     VALUES """
 
+    idGene = 0
     idMed = 0
     for medication in my_json_obj["CurrentMedications"]:
         idMed += 1
         for gene in medication["GeneInfo"]:
+            idGene += 1
             query += f"""(
+                {idGene},
                 {idMed},
                 '{gene["Gene"]}',
                 '{gene["Genotype"]}',
@@ -460,12 +393,11 @@ def store_json_obj(my_json_obj):
 
     query = query[:-1] + ";"
 
-    fullQuery += query
+    # fullQuery += query
     excuteCommand(s_msg + "GeneInfo Data", e_msg, query)  
 
-
-    with open("sent_sql.txt", 'w') as file:
-        file.write(fullQuery)
+    # with open("sent_sql.txt", 'w') as file:
+    #     file.write(fullQuery)
 
 
 def load_data(new_file_name):
@@ -475,7 +407,7 @@ def load_data(new_file_name):
     db_json = { "CurrentMedications": [] }
 
     query = "SELECT * FROM currentmedications"
-    CurrentMedications = excuteCommand(s_msg + "MainInfo Data", e_msg, query)  
+    CurrentMedications = excuteCommand(s_msg + "CurrentMedications Data", e_msg, query)  
     query = "SELECT * FROM theraputicarea"
     TheraputicArea = excuteCommand(s_msg + "TheraputicArea Data", e_msg, query)  
     query = "SELECT * FROM theraputicareaofcurrentmedication"
@@ -490,7 +422,7 @@ def load_data(new_file_name):
     Generic = excuteCommand(s_msg + "Generic Data", e_msg, query)  
     query = "SELECT * FROM geneinfo"
     GeneInfo = excuteCommand(s_msg + "GeneInfo Data", e_msg, query)  
-
+     
     AllActions = []
     for act in Action:
         AllActions.append(act[1])
@@ -548,15 +480,15 @@ def load_data(new_file_name):
     return db_json
 
 
-@app.route('/exportJsonData')
+@app.route('/')
 def exportJsonData():
     print()
     print('Start Web-App >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-    print("DB JSON File needs update, proceding to export local json file to MySQL...")
 
     my_json_obj = get_my_json_obj(MY_JSON_FILE_NAME)
     # Try with TRY_JSON_FILE_NAME
-
+    
+    print("Updating DB JSON File, proceding to export local json file to MySQL...")
     store_json_obj(my_json_obj)
     print("Updated Data Base")
 
@@ -577,15 +509,101 @@ def exportJsonData():
 def exportJsonDataBiggerFile():
     print()
     print('Start Web-App >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-    print("DB JSON File needs update, proceding to export local json file to MySQL...")
 
     my_json_obj = get_my_json_obj(TRY_JSON_FILE_NAME)
 
+    print("Updating DB JSON File, proceding to export local json file to MySQL...")
     store_json_obj(my_json_obj)
     print("Updated Data Base")
 
     print("Proceding to import the data json...")
     db_data = load_data(DB_JSON_FILE_NAME)
+    print("JSON Data loaded correctly and ready to use.")
+
+    all_theraputic_areas = []
+    for medication in db_data["CurrentMedications"]:
+        for therapeutic_area in medication["TheraputicArea"]:
+            if not therapeutic_area in all_theraputic_areas:
+                all_theraputic_areas.append(therapeutic_area)
+
+    return render_template('index.html', data = db_data, theraputic_areas = all_theraputic_areas)
+
+
+
+
+
+# A way to get the same result, but by storing the hole JSON File
+
+def get_db_json_bin():
+    # Get JSON File from MySQL if exists
+    db_json_bin = ''
+    try:
+        cur = mysql.connection.cursor()
+        result = cur.execute("""SELECT data FROM table_json 
+        WHERE EXISTS (SELECT data FROM table_json);""")
+        db_json_bin = cur.fetchall()
+        print("JSON file loaded successfully from MySQL, result: ", result)
+    except mysql.connection.Error as error:
+        print("Failed loading JSON file from MySQL table: {0}".format(error))
+    return db_json_bin
+
+def get_my_json_bin(my_json_file):
+    # Get JSON File from Local as binary
+    with open(my_json_file, 'rb') as file:
+        my_json_bin = file.read()
+    print("JSON file loaded successfully from Local")
+    return my_json_bin
+
+def store_json_bin(my_json_bin):
+    # Export JSON File to MySQL
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("DROP TABLE IF EXISTS table_json;")
+        cur.execute("CREATE TABLE table_json (data BLOB);")
+        query = "INSERT INTO table_json (data) VALUES (%s)"
+        result = cur.execute(query, [my_json_bin])
+        mysql.connection.commit()
+        print("Local JSON File inserted successfully as a BLOB into table_json table, result: ", result)
+    except mysql.connection.Error as error:
+        print("Failed inserting BLOB data into MySQL table: {0}".format(error))
+
+def load_data_bin(new_file_name):
+    # Import JSON File from MySQL
+    try:
+        cur = mysql.connection.cursor()
+        result = cur.execute('SELECT data FROM table_json')
+        json_file = cur.fetchall()
+        # Writing file
+        with open(new_file_name, 'wb') as file:
+            file.write(json_file[0][0])
+        # Get Python JSON Object
+        with open(new_file_name) as file:
+            new_data = json.load(file)  
+        print("JSON file loaded successfully from table_json table, result: ", result)
+    except mysql.connection.Error as error:
+        print("Failed loading JSON file from MySQL table: {0}".format(error))
+    return new_data
+
+@app.route('/export-json-file')
+def exportJsonFile():
+    print()
+    print('Start Web-App >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+    print('Checking JSON Data...')
+    db_json_bin = get_db_json_bin()
+    if db_json_bin:
+        db_json_bin = db_json_bin[0][0]
+    my_json_bin = get_my_json_bin(MY_JSON_FILE_NAME)
+    # Also yo can try with TRY_JSON_FILE_NAME
+
+    if len(db_json_bin) != len(my_json_bin):
+        print("DB JSON File needs update, proceding to export local json file to MySQL...")
+        store_json_bin(my_json_bin)
+        print("Data Base updated")
+    else:
+        print("Data Base is updated")
+
+    print("Proceding to import the data json...")
+    db_data = load_data_bin(DB_JSON_FILE_NAME)
     print("JSON Data loaded correctly and ready to use.")
 
     all_theraputic_areas = []
